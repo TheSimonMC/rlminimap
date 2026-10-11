@@ -1,0 +1,18 @@
+{
+  "name": "Real Life MiniMap",
+  "short_name": "RL MiniMap",
+  "description": "GTA-inspirierte Echtzeit-Minimap mit Live-GPS",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#10171a",
+  "theme_color": "#10171a",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
