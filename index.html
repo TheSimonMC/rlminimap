@@ -1,72 +1,306 @@
 <!doctype html>
-<html lang="de"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#0c1418"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="RL MiniMap">
-<link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg" type="image/svg+xml">
-<link href="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.css" rel="stylesheet"><script src="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.js"></script>
-<title>Real Life MiniMap</title>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#151717" id="theme-color">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RL MiniMap">
+<meta name="description" content="Deine echten Straßen. Dein Spielstil. Eine Live-GPS-Minimap mit freier Karte und automatischer Verfolgung.">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.css">
+<title>RL MiniMap</title>
 <style>
-*{box-sizing:border-box}html,body,#map{width:100%;height:100%;margin:0}body{overflow:hidden;background:#0c1418;color:#e9fff9;font-family:system-ui,-apple-system,sans-serif}#map{position:absolute;inset:0}.maplibregl-control-container{font-size:9px;opacity:.6}
-#vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 45%,#0008 100%);z-index:2}
-#player{position:absolute;left:50%;top:50%;width:56px;height:56px;transform:translate(-50%,-50%);z-index:5;filter:drop-shadow(0 1px 7px #00efbf);pointer-events:none;display:none}
-#player svg{width:100%;height:100%}#player.active{display:block}
-#top{position:absolute;top:calc(env(safe-area-inset-top) + 14px);left:16px;right:16px;z-index:6;display:flex;justify-content:space-between;pointer-events:none;gap:12px}
-.brand{font-size:14px;font-weight:900;letter-spacing:1.8px;text-shadow:0 2px 5px #000}.brand small{display:block;color:#5df7c7;font-size:9px;letter-spacing:2.6px;margin-top:3px}
-#speed{background:#081719dd;border:1px solid #55f3c45e;border-radius:12px;padding:10px 15px;text-align:right;font-size:28px;line-height:1;font-weight:900;min-width:84px}#speed small{display:block;font-size:9px;letter-spacing:1.7px;margin-top:5px;color:#a9d5cb}
-#bottom{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 16px);left:14px;right:14px;z-index:6;display:flex;align-items:end;justify-content:space-between;gap:10px}
-#status{background:#071719e8;border:1px solid #ffffff25;border-radius:12px;padding:10px 12px;font-size:12px;max-width:58%;line-height:1.4;min-width:120px}
-#buttons{display:flex;gap:7px;justify-content:flex-end;flex-wrap:wrap}
-button{background:#112a2be8;border:1px solid #4af5c79c;color:#effffb;border-radius:11px;padding:11px 12px;font-size:12px;font-weight:800;cursor:pointer}
-button:active{background:#215449}
-#accuracy{display:block;color:#a1bdb7;font-size:10px;margin-top:3px}
-</style></head><body>
-<div id="map"></div><div id="vignette"></div>
-<div id="player" aria-label="Deine aktuelle GPS-Position"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fill="#081b1b55" stroke="#a7ffeb44" stroke-width="1.5"/><path d="M32 5 50 52 32 42 14 52Z" fill="#082423" stroke="#00ffc5" stroke-width="3.5" stroke-linejoin="round"/><path d="M32 17 42 43 32 37 22 43Z" fill="#effffb"/></svg></div>
-<div id="top"><div class="brand">REAL LIFE <small>MINIMAP / LIVE</small></div><div id="speed">0<small>KM/H</small></div></div>
-<div id="bottom"><div id="status" role="status">Warte auf GPS-Freigabe…<span id="accuracy">GPS noch nicht aktiv</span></div><div id="buttons"><button id="north" type="button">NORD: AUS</button><button id="follow" type="button">FOLGEN: AN</button><button id="gps" type="button">GPS START</button></div></div>
+:root{color-scheme:dark;--accent:#a8d584;--accent2:#7fbbd5;--ink:#f5f5ee;--muted:#adb2ab;--panel:rgba(20,23,21,.92);--border:rgba(255,255,255,.13);--button:rgba(255,255,255,.065);--shadow:0 10px 38px #0005;--radius:15px;--map-bg:#242725;--preview-road:#d9ddd5;--preview-water:#3e4c50;--on-accent:#152010;--font:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none}body{font-family:var(--font);background:var(--map-bg);color:var(--ink);-webkit-tap-highlight-color:transparent}button,input{font:inherit}button{cursor:pointer;color:inherit;touch-action:manipulation}button:disabled{opacity:.5;cursor:default}button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:4px}button{border:0}button svg,.symbol{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}button:active{filter:brightness(1.15)}[hidden]{display:none!important}.sr-only{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}#map{position:absolute;inset:0;touch-action:none}#map canvas:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}#shade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(#0007,transparent 26%,transparent 65%,#0005);z-index:1;transition:opacity .6s}body.quiet #shade{opacity:.28}.hud{position:absolute;z-index:4;transition:opacity .45s,transform .45s,visibility .45s}.quiet .hud{opacity:0;visibility:hidden;pointer-events:none}.quiet .header{transform:translateY(-10px)}.quiet .bottom{transform:translateY(14px)}.quiet .rail{transform:translateX(10px)}
+.header{top:calc(env(safe-area-inset-top) + 20px);left:max(20px,env(safe-area-inset-left));right:max(20px,env(safe-area-inset-right));display:flex;justify-content:space-between;align-items:flex-start;gap:12px;pointer-events:none}.brand{display:flex;gap:11px;align-items:center;text-shadow:0 2px 12px #0008}.brand-mark{height:43px;width:43px;display:grid;place-items:center;background:var(--accent);color:var(--on-accent);border-radius:9px;font-weight:950;font-size:21px;letter-spacing:-2px;text-shadow:none;box-shadow:var(--shadow)}.brand strong{display:block;font-size:18px;line-height:1.05;font-weight:900;letter-spacing:-.7px}.eyebrow{display:block;font-size:9px;letter-spacing:2px;font-weight:750;color:var(--accent);margin-top:6px}.live-chip{padding:9px 11px;display:flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--border);border-radius:30px;font-size:9px;font-weight:800;letter-spacing:1px;white-space:nowrap;box-shadow:var(--shadow)}.dot{width:6px;height:6px;background:var(--muted);border-radius:100%}.live-chip[data-state="live"] .dot{background:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 14%,transparent)}.live-chip[data-state="warn"] .dot{background:#f3b65e}.live-chip[data-state="search"] .dot{animation:pulse 1.2s infinite}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}.rail{right:max(18px,env(safe-area-inset-right));bottom:calc(env(safe-area-inset-bottom) + var(--dock-height,225px) + 39px);display:grid;gap:10px}.icon-button{min-width:48px;min-height:48px;display:flex;align-items:center;justify-content:center;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}.compass{height:59px;flex-direction:column;gap:2px}.compass b{font-size:9px;letter-spacing:1px}.compass svg{width:23px;height:23px;color:var(--accent)}.compass[aria-pressed="true"]{border-color:var(--accent)}.zoom{overflow:hidden}.zoom button{height:45px;width:48px;display:grid;place-items:center;background:transparent}.zoom button+button{border-top:1px solid var(--border)}#pitch{font-size:10px;font-weight:850;letter-spacing:.5px}
+.bottom{left:max(16px,env(safe-area-inset-left));right:max(16px,env(safe-area-inset-right));bottom:calc(env(safe-area-inset-bottom) + 27px);max-width:450px;margin:auto}.telemetry{padding:18px 20px 14px;margin-bottom:10px;position:relative;overflow:hidden}.telemetry:before{content:'';position:absolute;top:0;left:20px;width:45px;height:2px;background:var(--accent)}.telemetry-main{display:grid;grid-template-columns:105px 1fr;gap:17px;align-items:center}.speed{display:flex;align-items:baseline;gap:6px}.speed b{font-size:54px;font-weight:900;letter-spacing:-3.5px;line-height:1;font-variant-numeric:tabular-nums}.speed small{font-size:8px;letter-spacing:.8px;font-weight:750;color:var(--muted)}.location-state{border-left:1px solid var(--border);padding-left:17px;min-width:0}.mode{display:flex;align-items:center;gap:6px;color:var(--accent);font-size:9px;letter-spacing:1.3px;font-weight:850;white-space:nowrap}.mode i{width:5px;height:5px;background:currentColor;border-radius:50%}.location-state strong{font-size:14px;display:block;margin-top:6px;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.telemetry-footer{display:flex;align-items:center;justify-content:space-between;margin-top:13px;padding-top:11px;border-top:1px solid var(--border);font-size:10px;color:var(--muted);gap:9px}.signal{display:flex;gap:6px;align-items:center}.signal-bars{display:flex;align-items:flex-end;gap:2px;height:11px}.signal-bars i{display:block;width:3px;height:4px;background:var(--muted);opacity:.25}.signal-bars i:nth-child(2){height:7px}.signal-bars i:nth-child(3){height:9px}.signal-bars i:nth-child(4){height:11px}.signal-bars i.on{background:var(--accent);opacity:1}#course{font-variant-numeric:tabular-nums;white-space:nowrap}
+.toolbar{display:grid;grid-template-columns:52px 52px 1fr;gap:8px}.toolbar .tool{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:61px;border:1px solid var(--border);border-radius:var(--radius);background:var(--panel);box-shadow:var(--shadow)}.tool span{font-size:8px;letter-spacing:1px;font-weight:750}.tool svg{width:21px;height:21px}.follow-button{background:var(--accent);color:var(--on-accent);border-radius:var(--radius);padding:10px 16px;min-height:61px;display:flex;align-items:center;gap:12px;text-align:left;box-shadow:var(--shadow)}.follow-button strong{font-size:13px;font-weight:850;display:block}.follow-button small{display:block;margin-top:3px;font-size:9px;opacity:.75;letter-spacing:.3px}.return-ring{width:31px;height:31px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;background:conic-gradient(currentColor var(--progress,0%),transparent 0);position:relative}.return-ring:before{content:'';position:absolute;inset:2px;background:var(--accent);border-radius:50%}.return-ring svg{z-index:1;width:19px;height:19px}.hint{text-align:center;font-size:9px;letter-spacing:.35px;color:var(--muted);margin:9px 0 0;text-shadow:0 1px 4px #0008}.attribution{position:absolute;z-index:5;bottom:0;left:0;right:0;text-align:right;padding:3px max(5px,env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 3px) 4px;color:#ddd;background:#171b1bc9;font:9px/1.35 system-ui,sans-serif;pointer-events:none}.attribution a{color:inherit;pointer-events:auto;text-decoration:none}.attribution a:hover{text-decoration:underline}
+.player{width:43px;height:43px;pointer-events:none!important;z-index:2}.player svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 2px 3px #0009)}.player .halo{fill:var(--accent);opacity:.13}.player .arrow{fill:var(--accent);stroke:#131816;stroke-width:3;stroke-linejoin:round}.player .shine{fill:#fff;opacity:.9}.player.stale{opacity:.55}.player.stale .arrow{fill:#a5a8a3}.player.unknown .halo{opacity:.28}.player.unknown .shine{opacity:.2}
+.notice{position:absolute;z-index:6;left:16px;right:16px;top:calc(env(safe-area-inset-top) + 84px);margin:auto;max-width:430px;background:#3c2b16eb;border:1px solid #cf9b5266;border-radius:12px;padding:10px 13px;color:#ffdfaf;font-size:11px;line-height:1.45;backdrop-filter:blur(10px)}#welcome{position:absolute;z-index:7;left:22px;right:22px;top:26%;margin:auto;max-width:350px;padding:24px}.welcome-kicker{color:var(--accent);font-size:9px;letter-spacing:2px;font-weight:850}#welcome h1{font-size:29px;line-height:1.06;letter-spacing:-1px;margin:12px 0}#welcome p{font-size:12px;color:var(--muted);line-height:1.65;margin:0 0 18px}#welcome button{width:100%;border-radius:10px;background:var(--accent);color:var(--on-accent);min-height:45px;font-weight:800;font-size:13px}#welcome .dismiss{background:transparent;color:var(--muted);margin-top:8px;font-size:11px;min-height:36px}
+dialog{padding:0;color:var(--ink);border:1px solid var(--border);background:var(--panel);width:calc(100% - 20px);max-width:470px;max-height:85vh;max-height:85dvh;margin:auto auto calc(env(safe-area-inset-bottom) + 12px);border-radius:24px;box-shadow:0 20px 100px #0009;overflow:auto;overscroll-behavior:contain;-webkit-backdrop-filter:blur(25px);backdrop-filter:blur(25px)}dialog::backdrop{background:#0009;backdrop-filter:blur(4px)}.sheet-head{position:sticky;top:0;background:var(--panel);padding:22px 22px 15px;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:8px}.sheet-head h2{font-size:22px;letter-spacing:-.7px;margin:6px 0 0;line-height:1.1}.sheet-head .eyebrow{margin:0}.sheet-head button{box-shadow:none;background:var(--button);min-width:40px;min-height:40px;border-radius:100%}.sheet-body{padding:0 22px 22px}.themes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:5px 0 20px}.theme-card{padding:0 0 13px;overflow:hidden;border:1px solid var(--border);background:var(--button);border-radius:13px;text-align:left;position:relative}.theme-card[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}.theme-card strong{display:block;padding:10px 12px 0;font-size:13px;font-weight:800}.theme-card small{display:block;padding:4px 12px 0;font-size:9px;color:var(--muted)}.theme-card .check{position:absolute;right:8px;top:8px;width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);font-size:13px;display:none;place-items:center}.theme-card[aria-pressed="true"] .check{display:grid}.preview{height:76px;display:block;position:relative;overflow:hidden;background-color:var(--map-bg);background-image:linear-gradient(25deg,transparent 38%,var(--preview-road) 39%,var(--preview-road) 43%,transparent 44%),linear-gradient(112deg,transparent 39%,var(--preview-road) 40%,var(--preview-road) 44%,transparent 45%),linear-gradient(112deg,transparent 67%,var(--preview-road) 68%,var(--preview-road) 70%,transparent 71%)}.preview:before{content:'';position:absolute;width:65px;height:150px;background:var(--preview-water);left:-24px;top:-40px;transform:rotate(24deg);opacity:.8}.preview:after{content:'';position:absolute;left:53%;top:48%;width:17px;height:24px;background:var(--accent);clip-path:polygon(50% 0,100% 100%,50% 76%,0 100%);filter:drop-shadow(0 1px 3px #000)}.section-label{font-size:9px;letter-spacing:1.8px;color:var(--muted);font-weight:800;margin:16px 0 4px}.setting{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--border);gap:14px;cursor:pointer}.setting strong{display:block;font-size:12px;font-weight:650}.setting small{display:block;font-size:10px;color:var(--muted);margin-top:4px;line-height:1.4}.setting input{appearance:none;-webkit-appearance:none;width:38px;height:23px;border-radius:30px;background:#767b7b55;border:1px solid var(--border);position:relative;margin:0;flex-shrink:0;cursor:pointer;transition:background .2s}.setting input:before{content:'';position:absolute;left:3px;top:3px;width:15px;height:15px;background:#e5e9e4;border-radius:50%;transition:transform .2s}.setting input:checked{background:var(--accent)}.setting input:checked:before{transform:translateX(15px);background:var(--on-accent)}.sheet-note{font-size:10px;line-height:1.7;color:var(--muted);margin:16px 0 0}.version-line{display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);font-size:10px;color:var(--muted)}.version-line button{font-size:10px;padding:9px 11px;background:var(--button);border-radius:8px}.toast{position:absolute;z-index:10;left:20px;right:20px;top:calc(env(safe-area-inset-top) + 86px);max-width:360px;margin:auto;background:var(--panel);color:var(--ink);border:1px solid var(--border);padding:12px 16px;border-radius:12px;font-size:12px;box-shadow:var(--shadow);text-align:center;pointer-events:none}
+[data-theme="heat"]{--accent:#fe5cc8;--accent2:#5ee9eb;--on-accent:#260d25;--panel:rgba(21,13,35,.93);--border:rgba(245,116,233,.2);--muted:#bca7cc;--radius:6px;--ink:#fff4fc;--map-bg:#121020;--preview-road:#62d9e3;--preview-water:#1c2340}[data-theme="heat"] .brand-mark{border-radius:3px;transform:skew(-9deg)}[data-theme="heat"] .brand strong,[data-theme="heat"] .speed b{font-style:italic}[data-theme="heat"] .telemetry:before{width:100%;left:0;background:linear-gradient(90deg,var(--accent),var(--accent2))}[data-theme="heat"] .telemetry{border-left:3px solid var(--accent)}[data-theme="heat"] .mode{color:var(--accent2)}[data-theme="heat"] .follow-button{background:linear-gradient(105deg,#ff5ac9,#df5bef)}[data-theme="heat"] .player svg{filter:drop-shadow(0 0 7px #f958b788)}
+[data-theme="vice"]{--accent:#fc9dcc;--accent2:#88e6e1;--on-accent:#35213c;--ink:#fff4ef;--muted:#d9bad6;--panel:rgba(60,34,65,.91);--border:rgba(255,203,234,.22);--radius:20px;--map-bg:#c8c2b3;--preview-road:#fff0dc;--preview-water:#75bfc7}[data-theme="vice"] .brand strong{font-style:italic;letter-spacing:-1px}[data-theme="vice"] .brand-mark{border-radius:50%;background:linear-gradient(#ffc3df,#9de6df)}[data-theme="vice"] .mode{color:var(--accent2)}[data-theme="vice"] .telemetry:before{width:70px;background:var(--accent2)}[data-theme="vice"] .speed b{font-weight:650}
+[data-theme="mono"]{color-scheme:light;--accent:#313b3a;--accent2:#65817d;--on-accent:#fff;--ink:#202a28;--muted:#626f6b;--panel:rgba(248,249,245,.95);--border:rgba(28,51,44,.14);--button:rgba(28,51,44,.045);--radius:14px;--shadow:0 6px 30px #18302c18;--map-bg:#e5e7df;--preview-road:#fff;--preview-water:#b8ccce}[data-theme="mono"] .brand{text-shadow:0 1px 8px #fff}[data-theme="mono"] .brand-mark{font-weight:800;border-radius:13px}[data-theme="mono"] #shade{background:linear-gradient(#e4e7df66,transparent 30%,transparent 70%,#e4e7df44)}[data-theme="mono"] .speed b{font-weight:550}[data-theme="mono"] .hint{text-shadow:none}[data-theme="mono"] .player .arrow{stroke:#fff}
+@media(max-width:359px){.telemetry{padding:16px 16px 12px}.telemetry-main{grid-template-columns:76px 1fr;gap:12px}.speed b{font-size:42px}.speed small{font-size:7px}.location-state{padding-left:12px}.mode{font-size:8px;letter-spacing:1px}.follow-button{padding:10px 12px;gap:8px}.follow-button strong{font-size:12px}.toolbar{grid-template-columns:48px 48px 1fr;gap:7px}.hint{font-size:8px;letter-spacing:0}}
+@keyframes pulse{50%{opacity:.35}}@media(min-width:700px){.header{top:30px;left:32px;right:32px}.bottom{left:30px;right:auto;width:390px;bottom:35px}.rail{right:30px;bottom:40px}.brand strong{font-size:21px}dialog{margin:auto}#welcome{top:28%}}@media(max-height:550px) and (orientation:landscape){.header{top:calc(env(safe-area-inset-top) + 10px)}.bottom{left:max(16px,env(safe-area-inset-left));right:auto;width:320px;bottom:calc(env(safe-area-inset-bottom) + 20px)}.telemetry{padding:12px 16px 10px}.speed b{font-size:37px}.telemetry-footer{margin-top:7px;padding-top:7px}.toolbar .tool,.follow-button{min-height:48px}.rail{bottom:calc(env(safe-area-inset-bottom) + 30px)}.hint{display:none}#welcome{top:20%;left:auto;right:90px;width:290px;padding:18px}#welcome h1{font-size:24px}.notice{max-width:330px;left:auto;right:80px;top:70px}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body data-theme="gta">
+<svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden"><defs>
+<symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></symbol>
+<symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5"/></symbol>
+<symbol id="i-gps" viewBox="0 0 24 24"><path d="m21 3-6.5 18-3.8-7.7L3 9.5 21 3Z"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" stroke-width="3"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
+<symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+<symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+</defs></svg>
+<main id="map" aria-label="Straßenkarte. Verschieben und zoomen. Zum Einblenden der Bedienung antippen."></main>
+<div id="shade"></div>
+<header class="hud header">
+ <div class="brand"><span class="brand-mark">RL</span><div><strong>MINIMAP</strong><span class="eyebrow" id="theme-label">GTA V / CLASSIC</span></div></div>
+ <div class="live-chip" id="live-chip" data-state="off"><i class="dot"></i><span id="live-label">GPS AUS</span></div>
+</header>
+<div id="notice" class="notice" role="status" hidden></div>
+<div class="hud rail" aria-label="Kartenansicht">
+ <button id="north" class="icon-button compass" aria-label="Norden oben einschalten" aria-pressed="false"><svg id="compass-needle" viewBox="0 0 24 24"><path d="m12 2 5 18-5-4-5 4 5-18Z" fill="currentColor" stroke="none"/></svg><b>N</b></button>
+ <button id="pitch" class="icon-button" aria-label="Karte neigen" aria-pressed="false">2D</button>
+ <div class="panel zoom"><button id="zoom-in" aria-label="Vergrößern"><svg><use href="#i-plus"/></svg></button><button id="zoom-out" aria-label="Verkleinern"><svg><use href="#i-minus"/></svg></button></div>
+</div>
+<section class="hud bottom" aria-label="Standort und Bedienung">
+ <div class="panel telemetry">
+  <div class="telemetry-main"><div class="speed"><b id="speed">··</b><small>KM/H</small></div><div class="location-state"><span class="mode"><i></i><span id="mode">BEREIT</span></span><strong id="location-text">Dein Radar wartet.</strong></div></div>
+  <div class="telemetry-footer"><span class="signal"><span class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span id="accuracy">Noch kein Standort</span></span><span id="course">Richtung offen</span></div>
+ </div>
+ <div class="toolbar">
+  <button id="themes-open" class="tool" aria-label="Themes und Einstellungen öffnen"><svg><use href="#i-layers"/></svg><span>THEMES</span></button>
+  <button id="gps" class="tool" aria-label="GPS starten"><svg><use id="gps-icon" href="#i-gps"/></svg><span id="gps-label">GPS</span></button>
+  <button id="follow" class="follow-button" aria-label="Zu deiner GPS-Position zurückkehren"><span class="return-ring" id="return-ring"><svg><use href="#i-target"/></svg></span><span><strong id="follow-title">GPS verbinden</strong><small id="follow-detail">Deinen Standort freigeben</small></span></button>
+ </div>
+ <p class="hint" id="hint">Frei bewegen. Nach 10 Sekunden wieder bei dir.</p>
+</section>
+<section id="welcome" class="panel" aria-labelledby="welcome-title"><span class="welcome-kicker">REAL LIFE. GAME FEEL.</span><h1 id="welcome-title">Deine Straßen.<br>Dein Radar.</h1><p id="welcome-copy">Standort erlauben und losgehen. Dein Pfeil bleibt an deiner GPS-Position, auch wenn du die Karte verschiebst.</p><button id="welcome-start">GPS verbinden</button><button id="welcome-dismiss" class="dismiss">Erst die Karte ansehen</button></section>
+<dialog id="settings" aria-labelledby="settings-title">
+ <div class="sheet-head"><div><span class="eyebrow">DEIN RADAR, DEIN STIL</span><h2 id="settings-title">Wähle deinen Look.</h2></div><button id="themes-close" class="icon-button" aria-label="Einstellungen schließen"><svg><use href="#i-close"/></svg></button></div>
+ <div class="sheet-body">
+  <div class="themes" aria-label="Kartenthemes">
+   <button class="theme-card" data-select-theme="gta" aria-pressed="true"><span class="preview" data-theme="gta"></span><span class="check">✓</span><strong>GTA V</strong><small>Classic / Weiß auf Anthrazit</small></button>
+   <button class="theme-card" data-select-theme="heat" aria-pressed="false"><span class="preview" data-theme="heat"></span><span class="check">✓</span><strong>NFS Heat</strong><small>Night run / Pink und Cyan</small></button>
+   <button class="theme-card" data-select-theme="vice" aria-pressed="false"><span class="preview" data-theme="vice"></span><span class="check">✓</span><strong>Vice City</strong><small>Sunset / Pastell und Türkis</small></button>
+   <button class="theme-card" data-select-theme="mono" aria-pressed="false"><span class="preview" data-theme="mono"></span><span class="check">✓</span><strong>Minimal</strong><small>Pure / Hell und reduziert</small></button>
+  </div>
+  <div class="section-label">KARTE & BEDIENUNG</div>
+  <label class="setting"><span><strong>Straßennamen</strong><small>Straßen und Orte beschriften</small></span><input id="labels-toggle" type="checkbox" checked></label>
+  <label class="setting"><span><strong>Genauigkeitskreis</strong><small>Zeigt die gemeldete GPS-Ungenauigkeit</small></span><input id="accuracy-toggle" type="checkbox" checked></label>
+  <label class="setting"><span><strong>HUD automatisch ausblenden</strong><small>Nach 10 Sekunden. Antippen blendet es ein.</small></span><input id="hud-toggle" type="checkbox" checked></label>
+  <label class="setting"><span><strong>Display wach halten</strong><small id="wake-detail">Nur solange diese App sichtbar ist</small></span><input id="wake-toggle" type="checkbox"></label>
+  <p class="sheet-note">Nach 10 Sekunden ohne Eingabe folgt die Karte wieder dem Spieler. Solange dieses Menü offen ist, bleibt sie frei. Der Pfeil zeigt die letzte GPS-Messung, nicht eine garantierte exakte Position. Ohne verlässliche Bewegung bleibt die Richtung offen.</p>
+  <p class="sheet-note">Eigene, spielinspirierte Themes, keine Originalgrafiken oder 1:1-Repliken. Keine Routenführung. Bitte nur im Stand bedienen.</p>
+  <details class="sheet-note"><summary>Datenschutz & Technik</summary>Kein GPS-Verlauf wird gespeichert oder an einen eigenen Server gesendet. Gespeichert werden nur Einstellungen. Kartenkacheln und Kartenschriften kommen von OpenFreeMap, die Kartenbibliothek von einem CDN. Diese Anbieter erhalten Anfragen, IP-Adresse und den geladenen Kartenausschnitt. Internet wird für neue Kartenausschnitte benötigt. Im Hintergrund oder bei gesperrtem iPhone ist die Verfolgung nicht zuverlässig.</details>
+  <div class="version-line"><span>RL MiniMap <b>3.0.0</b></span><button id="reload">App neu laden</button></div>
+ </div>
+</dialog>
+<div class="toast" id="toast" role="status" hidden></div>
+<footer class="attribution"><a href="https://openfreemap.org" target="_blank" rel="noopener noreferrer">OpenFreeMap</a> · © <a href="https://openmaptiles.org" target="_blank" rel="noopener noreferrer">OpenMapTiles</a> · © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a></footer>
+<noscript><div class="notice">Für die Karte bitte JavaScript aktivieren.</div></noscript>
+<script src="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.js"></script>
 <script>
 'use strict';
-const $=id=>document.getElementById(id);
-const style={version:8,sources:{osm:{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,attribution:'© OpenStreetMap contributors'}},layers:[{id:'osm',type:'raster',source:'osm',paint:{'raster-saturation':-0.95,'raster-brightness-max':0.58,'raster-contrast':0.2}}]};
-const map=new maplibregl.Map({container:'map',style,center:[16.3738,48.2082],zoom:16,attributionControl:false});
-map.addControl(new maplibregl.AttributionControl({compact:true}));
-let watch=null,tracking=false,follow=true,northUp=false,previous=null,heading=0,hasFix=false,lastFixAt=0;
-const rad=Math.PI/180;
-function meters(a,b){const dlat=(b.lat-a.lat)*rad,dlon=(b.lon-a.lon)*rad;const h=Math.sin(dlat/2)**2+Math.cos(a.lat*rad)*Math.cos(b.lat*rad)*Math.sin(dlon/2)**2;return 12742000*Math.asin(Math.min(1,Math.sqrt(h)));}
-function bearing(a,b){const dlon=(b.lon-a.lon)*rad;const y=Math.sin(dlon)*Math.cos(b.lat*rad);const x=Math.cos(a.lat*rad)*Math.sin(b.lat*rad)-Math.sin(a.lat*rad)*Math.cos(b.lat*rad)*Math.cos(dlon);return (Math.atan2(y,x)/rad+360)%360;}
-function label(msg,detail=''){ $('status').firstChild.textContent=msg;$('accuracy').textContent=detail; }
-function update(p){
- const c=p.coords,point={lat:c.latitude,lon:c.longitude},timestamp=p.timestamp||Date.now();
- if(!Number.isFinite(point.lat)||!Number.isFinite(point.lon))return;
- let speed=Number.isFinite(c.speed)&&c.speed>=0?c.speed:null;
- const traveled=previous?meters(previous.point,point):0;
- const dt=previous?(timestamp-previous.timestamp)/1000:0;
- if(speed===null&&dt>0&&dt<30&&traveled>3)speed=traveled/dt;
- if(speed!==null&&speed>1.3&&Number.isFinite(c.heading))heading=c.heading;
- else if(previous&&traveled>Math.max(6,Math.min(15,c.accuracy||10))&&dt>0&&dt<30)heading=bearing(previous.point,point);
- $('speed').firstChild.textContent=String(Math.round(Math.max(0,(speed||0)*3.6)));
- $('player').classList.add('active');hasFix=true;lastFixAt=Date.now();
- label('GPS LIVE', 'Genauigkeit: ±'+Math.round(c.accuracy||0)+' m'+(speed===null?' • Tempo unbekannt':''));
- if(follow){map.stop();map.jumpTo({center:[point.lon,point.lat],bearing:northUp?0:-heading,zoom:Math.max(map.getZoom(),16)});}
- previous={point,timestamp};
+(() => {
+const VERSION='3.0.0', IDLE_MS=10000, STALE_MS=30000, $=id=>document.getElementById(id);
+const defaults={theme:'gta',labels:true,accuracy:true,hideHud:true,north:false,tilt:false,autoStart:false};
+let saved={};try{saved=JSON.parse(localStorage.getItem('rlminimap-settings')||'{}')||{};}catch{}
+const prefs={...defaults};for(const k of Object.keys(defaults)){if(typeof saved[k]===typeof defaults[k])prefs[k]=saved[k];}
+const palette={
+ gta:{label:'GTA V / CLASSIC',bg:'#242725',land:'#2d312e',park:'#333e31',water:'#3b484b',building:'#393d38',edge:'#202320',road:'#c8cec2',major:'#e7e8df',highway:'#faf5e5',path:'#7a877b',text:'#b8c2b4',halo:'#222820',accent:'#a8d584'},
+ heat:{label:'NFS HEAT / NIGHT RUN',bg:'#121020',land:'#19172a',park:'#162d2c',water:'#1b2341',building:'#27203a',edge:'#151729',road:'#5bbfc9',major:'#9bdae8',highway:'#ff8bdd',path:'#737698',text:'#c2a9cf',halo:'#191125',accent:'#fe5cc8'},
+ vice:{label:'VICE CITY / SUNSET',bg:'#c8c2b3',land:'#d4c9b6',park:'#a7bca5',water:'#75bfc7',building:'#b6acb6',edge:'#a898aa',road:'#f4e5ce',major:'#fff4dd',highway:'#faf2d7',path:'#aa9aa6',text:'#66586f',halo:'#eee0d5',accent:'#be4d9e'},
+ mono:{label:'MINIMAL / PURE',bg:'#e5e7df',land:'#daddd5',park:'#c9d8c4',water:'#b8ccce',building:'#c9d0c7',edge:'#b5c0b9',road:'#fafff9',major:'#fff',highway:'#fff',path:'#95a99f',text:'#607568',halo:'#f7f9f3',accent:'#313b3a'}
+};
+if(!palette[prefs.theme])prefs.theme='gta';
+const state={map:null,marker:null,fix:null,heading:null,headingAnchor:null,tracking:false,watch:null,gpsGeneration:0,following:true,returning:false,returnTimer:null,returnGeneration:0,followZoom:16.6,lastInput:performance.now(),pointers:new Set(),quiet:false,ready:false,lastError:'',mapError:false,tilesSeen:false,needsRecenter:true,requestPending:false,wake:null,wakeWanted:false,toastTimer:null};
+const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
+function persist(){try{localStorage.setItem('rlminimap-settings',JSON.stringify(prefs));}catch{}}
+function toast(text){$('toast').textContent=text;$('toast').hidden=false;clearTimeout(state.toastTimer);state.toastTimer=setTimeout(()=>$('toast').hidden=true,3000);}
+function reveal(){state.lastInput=performance.now();state.quiet=false;document.body.classList.remove('quiet');document.querySelectorAll('.hud').forEach(el=>el.inert=false);}
+function hideHud(){if(!prefs.hideHud||$('settings').open||!$('welcome').hidden||!isFresh()||document.activeElement?.closest('.hud'))return;state.quiet=true;document.body.classList.add('quiet');document.querySelectorAll('.hud').forEach(el=>el.inert=true);}
+function isFresh(){return state.tracking&&state.fix&&Date.now()-state.fix.timestamp<STALE_MS&&!state.lastError;}
+function norm(a){return ((a%360)+360)%360;}
+function delta(a,b){return ((b-a+540)%360)-180;}
+const r=Math.PI/180;
+function distance(a,b){const h=Math.sin((b.lat-a.lat)*r/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin((b.lng-a.lng)*r/2)**2;return 12742000*Math.asin(Math.sqrt(Math.min(1,Math.max(0,h))));}
+function bearing(a,b){const d=(b.lng-a.lng)*r;return norm(Math.atan2(Math.sin(d)*Math.cos(b.lat*r),Math.cos(a.lat*r)*Math.sin(b.lat*r)-Math.sin(a.lat*r)*Math.cos(b.lat*r)*Math.cos(d))/r);}
+function empty(){return {type:'FeatureCollection',features:[]};}
+function circle(fix){if(!fix||!prefs.accuracy)return empty();const lat=fix.lat*r,lng=fix.lng*r,d=fix.accuracy/6371000,coords=[];for(let i=0;i<=64;i++){const a=i/64*2*Math.PI,p=Math.asin(Math.sin(lat)*Math.cos(d)+Math.cos(lat)*Math.sin(d)*Math.cos(a));const q=lng+Math.atan2(Math.sin(a)*Math.sin(d)*Math.cos(lat),Math.cos(d)-Math.sin(lat)*Math.sin(p));coords.push([q/r,p/r]);}return {type:'Feature',properties:{},geometry:{type:'Polygon',coordinates:[coords]}};}
+function width(base){return ['interpolate',['exponential',1.5],['zoom'],5,base*.05,10,base*.18,14,base*.5,17,base*1.8,20,base*8];}
+function makeStyle(name){const c=palette[name],v={source:'world'},layers=[
+ {id:'ground',type:'background',paint:{'background-color':c.bg}},
+ {id:'land',type:'fill',...v,'source-layer':'landuse',paint:{'fill-color':c.land,'fill-opacity':.7}},
+ {id:'green',type:'fill',...v,'source-layer':'landcover',filter:['in','class','wood','grass','scrub'],paint:{'fill-color':c.park,'fill-opacity':.65}},
+ {id:'park',type:'fill',...v,'source-layer':'park',paint:{'fill-color':c.park,'fill-opacity':.45}},
+ {id:'water',type:'fill',...v,'source-layer':'water',paint:{'fill-color':c.water}},
+ {id:'river',type:'line',...v,'source-layer':'waterway',paint:{'line-color':c.water,'line-width':width(3)}},
+ {id:'buildings',type:'fill',...v,'source-layer':'building',minzoom:14,paint:{'fill-color':c.building,'fill-outline-color':c.edge,'fill-opacity':.85}},
+ {id:'plazas',type:'fill',...v,'source-layer':'transportation',filter:['==','$type','Polygon'],paint:{'fill-color':c.road,'fill-opacity':.45}},
+ {id:'paths',type:'line',...v,'source-layer':'transportation',filter:['all',['==','$type','LineString'],['in','class','path','track']],paint:{'line-color':c.path,'line-width':width(1),'line-dasharray':[2,2]}},
+ {id:'rails',type:'line',...v,'source-layer':'transportation',filter:['in','class','rail','transit'],paint:{'line-color':c.path,'line-width':width(1.2),'line-dasharray':[3,2]}}
+ ];
+ for(const [id,classes,size,color] of [['small',['minor','service'],3.7,c.road],['main',['primary','secondary','tertiary'],5.4,c.major],['fast',['motorway','trunk'],7,c.highway]]){
+  const filter=['all',['==','$type','LineString'],['in','class',...classes]];
+  layers.push({id:id+'-edge',type:'line',...v,'source-layer':'transportation',filter,layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':c.edge,'line-width':width(size+1.5)}});
+  layers.push({id:id+'-road',type:'line',...v,'source-layer':'transportation',filter,layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':color,'line-width':width(size)}});
+ }
+ layers.push(
+ {id:'accuracy-fill',type:'fill',source:'accuracy',paint:{'fill-color':c.accent,'fill-opacity':.1}},
+ {id:'accuracy-line',type:'line',source:'accuracy',paint:{'line-color':c.accent,'line-opacity':.45,'line-width':1}},
+ {id:'road-labels',type:'symbol',...v,'source-layer':'transportation_name',minzoom:14,layout:{visibility:prefs.labels?'visible':'none','symbol-placement':'line','text-field':['coalesce',['get','name:de'],['get','name'],''],'text-font':['Noto Sans Regular'],'text-size':11,'text-letter-spacing':.02,'text-max-angle':30,'symbol-spacing':350},paint:{'text-color':c.text,'text-halo-color':c.halo,'text-halo-width':1.2}},
+ {id:'place-labels',type:'symbol',...v,'source-layer':'place',maxzoom:16,filter:['in','class','city','town','village','suburb','neighbourhood'],layout:{visibility:prefs.labels?'visible':'none','text-field':['coalesce',['get','name:de'],['get','name'],''],'text-font':['Noto Sans Regular'],'text-size':['interpolate',['linear'],['zoom'],5,11,12,14,16,17],'text-transform':'uppercase','text-letter-spacing':.14,'text-max-width':9},paint:{'text-color':c.text,'text-halo-color':c.halo,'text-halo-width':1.4}}
+ );
+ return {version:8,glyphs:'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',sources:{world:{type:'vector',url:'https://tiles.openfreemap.org/planet'},accuracy:{type:'geojson',data:circle(state.fix)}},transition:{duration:350,delay:0},layers};
 }
-function error(e){const message=e.code===1?'Standort verweigert. Safari-Einstellungen prüfen.':e.code===2?'GPS-Signal nicht verfügbar.':'GPS-Suche dauert zu lange.';label(message,'GPS benötigt Standortfreigabe und HTTPS');if(e.code===1)stop(false);}
-function start(){
- if(tracking)return;
- if(!window.isSecureContext){label('HTTPS erforderlich','Öffne die GitHub-Pages-Adresse.');return;}
- if(!navigator.geolocation){label('GPS wird nicht unterstützt');return;}
- tracking=true;$('gps').textContent='GPS STOP';label('GPS wird gesucht…','Standortzugriff bitte erlauben');
- watch=navigator.geolocation.watchPosition(update,error,{enableHighAccuracy:true,maximumAge:0,timeout:20000});
+function applyTheme(name){prefs.theme=name;document.body.dataset.theme=name;$('theme-label').textContent=palette[name].label;$('theme-color').content=palette[name].bg;document.querySelectorAll('[data-select-theme]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.selectTheme===name)));if(state.ready){for(const layer of makeStyle(name).layers){if(!state.map.getLayer(layer.id))continue;for(const [key,val]of Object.entries(layer.paint||{}))state.map.setPaintProperty(layer.id,key,val);if(layer.layout?.visibility)state.map.setLayoutProperty(layer.id,'visibility',layer.layout.visibility);}}persist();}
+function updateCircle(){const source=state.map?.getSource('accuracy');if(source)source.setData(circle(state.fix));}
+function cancelReturn(){state.returnGeneration++;clearTimeout(state.returnTimer);state.returnTimer=null;state.returning=false;}
+function detach(){reveal();if(state.following)state.followZoom=Math.min(19,Math.max(12,state.map.getZoom()));cancelReturn();state.following=false;state.needsRecenter=false;render();}
+function cameraBearing(){return prefs.north?0:(state.heading??0);}
+function followCamera(duration=650){if(!state.map||!state.fix||!state.following||state.returning||state.pointers.size||!isFresh())return;state.map.easeTo({center:[state.fix.lng,state.fix.lat],bearing:cameraBearing(),duration:reduced.matches?0:duration,easing:t=>1-(1-t)**3});}
+function returnToPlayer(automatic=false){
+ if(!state.fix){if(!state.tracking)startGPS();return;}
+ if(!isFresh()){if(!automatic)toast('Noch kein frisches GPS-Signal.');return;}
+ if(!automatic)reveal();
+ cancelReturn();const generation=state.returnGeneration;state.following=true;state.returning=true;state.needsRecenter=false;
+ state.map.stop();
+ const center=state.map.getCenter(),meters=distance({lat:center.lat,lng:center.lng},state.fix);
+ const duration=reduced.matches?0:Math.min(2200,Math.max(1000,850+Math.log10(meters+1)*230));
+ state.map.flyTo({center:[state.fix.lng,state.fix.lat],zoom:state.followZoom,bearing:cameraBearing(),pitch:prefs.tilt?45:0,duration,curve:1.3,easing:t=>t*t*(3-2*t)});
+ render();if(automatic)hideHud();
+ // GPS updates move the marker during a return flight, but never interrupt the camera flight.
+ state.returnTimer=setTimeout(()=>{if(generation!==state.returnGeneration)return;state.returning=false;state.returnTimer=null;followCamera(500);render();},duration+60);
 }
-function stop(show=true){if(watch!==null)navigator.geolocation.clearWatch(watch);watch=null;tracking=false;$('gps').textContent='GPS START';if(show)label('GPS pausiert','Zum Fortsetzen GPS START drücken');}
-$('gps').onclick=()=>tracking?stop():start();
-$('follow').onclick=()=>{follow=!follow;$('follow').textContent=follow?'FOLGEN: AN':'FOLGEN: AUS';if(follow&&previous){map.jumpTo({center:[previous.point.lon,previous.point.lat],bearing:northUp?0:-heading});}};
-$('north').onclick=()=>{northUp=!northUp;$('north').textContent=northUp?'NORD: AN':'NORD: AUS';map.easeTo({bearing:northUp?0:-heading,duration:250});};
-map.on('dragstart',()=>{follow=false;$('follow').textContent='FOLGEN: AUS';});
-map.on('error',e=>{if(!hasFix)label('Karte konnte nicht geladen werden','Internetverbindung prüfen');});
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&tracking&&previous){label('GPS LIVE','Aktualisierung läuft…');}});
-if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
-// On iPhone, this requests location when the app is opened. If permission was granted earlier,
-// tracking resumes automatically while the app is in the foreground.
-map.once('load',()=>start());
-</script></body></html>
+function updateHeading(fix,coords){
+ const moving=fix.speed!==null&&fix.speed>=1.2;
+ if(moving&&Number.isFinite(coords.heading)&&coords.heading>=0&&coords.heading<360){state.heading=norm(coords.heading);state.headingAnchor=fix;return;}
+ if(!state.headingAnchor){state.headingAnchor=fix;return;}
+ const anchor=state.headingAnchor,dt=(fix.timestamp-anchor.timestamp)/1000;
+ if(dt>30||dt<0){state.headingAnchor=fix;return;}
+ const threshold=Math.max(8,Math.min(80,(fix.accuracy+anchor.accuracy)*.75));
+ if(dt>=1&&distance(anchor,fix)>threshold){state.heading=bearing(anchor,fix);state.headingAnchor=fix;}
+}
+function onFix(position){
+ if(!state.tracking)return;
+ const c=position.coords,t=position.timestamp||Date.now();
+ if(!Number.isFinite(c.latitude)||!Number.isFinite(c.longitude)||Math.abs(c.latitude)>90||Math.abs(c.longitude)>180||!Number.isFinite(c.accuracy)||c.accuracy<0)return;
+ if(state.fix&&t<state.fix.timestamp)return;
+ if(Date.now()-t>STALE_MS){state.lastError='GPS liefert noch keine aktuelle Position.';render();return;}
+ const first=!state.fix;
+ const fix={lat:c.latitude,lng:c.longitude,accuracy:c.accuracy,timestamp:t,speed:Number.isFinite(c.speed)&&c.speed>=0?c.speed:null};
+ updateHeading(fix,c);state.fix=fix;state.lastError='';if(!prefs.autoStart){prefs.autoStart=true;persist();}$('welcome').hidden=true;
+ if(!state.marker){const el=document.createElement('div');el.className='player';el.setAttribute('aria-label','Letzte gemeldete GPS-Position');el.innerHTML='<svg viewBox="0 0 48 48" aria-hidden="true"><circle class="halo" cx="24" cy="24" r="22"/><path class="arrow" d="M24 7 37 38 24 31 11 38Z"/><path class="shine" d="m24 13 0 15-8 5Z"/></svg>';state.marker=new maplibregl.Marker({element:el,anchor:'center',rotationAlignment:'map',pitchAlignment:'map',subpixelPositioning:true}).setLngLat([fix.lng,fix.lat]).addTo(state.map);}
+ // The marker is a geographic object, never a fixed overlay in the middle of the screen.
+ state.marker.setLngLat([fix.lng,fix.lat]);state.marker.setRotation(state.heading??0);state.marker.getElement().classList.toggle('unknown',state.heading===null);updateCircle();
+ if(state.following&&!state.returning){if(state.needsRecenter||first){state.needsRecenter=false;returnToPlayer(false);}else followCamera();}
+ render();
+}
+function onGpsError(error){
+ if(!state.tracking)return;
+ if(error.code===1){stopGPS(false);state.lastError='Standort gesperrt. Bitte in Safari bzw. den iPhone-Standorteinstellungen erlauben.';prefs.autoStart=false;persist();}
+ else state.lastError=error.code===2?'GPS-Signal nicht verfügbar. Standortsuche läuft weiter.':'GPS-Suche dauert länger. Suche läuft weiter.';
+ reveal();render();
+}
+function watchGPS(){const token=++state.gpsGeneration;state.watch=navigator.geolocation.watchPosition(p=>{if(token===state.gpsGeneration)onFix(p);},e=>{if(token===state.gpsGeneration)onGpsError(e);},{enableHighAccuracy:true,maximumAge:0,timeout:20000});}
+function startGPS(){
+ reveal();if(state.tracking){refreshGPS();return;}
+ if(!window.isSecureContext){toast('GPS benötigt HTTPS. Bitte die veröffentlichte App öffnen.');return;}
+ if(!navigator.geolocation){toast('Dieser Browser unterstützt keinen Standortzugriff.');return;}
+ state.tracking=true;state.lastError='';state.headingAnchor=null;state.following=true;state.needsRecenter=true;$('welcome').hidden=true;
+ try{watchGPS();}catch{state.tracking=false;state.lastError='Standortzugriff konnte nicht gestartet werden.';}
+ render();
+}
+function stopGPS(announce=true){
+ state.tracking=false;state.gpsGeneration++;state.requestPending=false;if(state.watch!==null)navigator.geolocation.clearWatch(state.watch);state.watch=null;cancelReturn();state.map?.stop();prefs.autoStart=false;persist();state.lastError='';reveal();render();if(announce)toast('GPS pausiert. Der Pfeil zeigt nur den letzten Standort.');
+}
+function refreshGPS(){
+ if(!state.tracking||document.hidden||state.requestPending)return;
+ state.requestPending=true;const token=state.gpsGeneration;
+ navigator.geolocation.getCurrentPosition(p=>{if(token!==state.gpsGeneration)return;state.requestPending=false;onFix(p);},e=>{if(token!==state.gpsGeneration)return;state.requestPending=false;onGpsError(e);},{enableHighAccuracy:true,maximumAge:0,timeout:12000});
+}
+function render(){
+ const fresh=!!isFresh(),f=state.fix,age=f?Math.max(0,Math.floor((Date.now()-f.timestamp)/1000)):0;
+ let label='GPS AUS',chip='off';
+ if(state.tracking){label=fresh?(f.accuracy>50?'GPS UNGENAU':'GPS LIVE'):(f?'GPS WARTET':'GPS SUCHE');chip=fresh?(f.accuracy>50?'warn':'live'):'search';}
+ if(state.lastError){label='GPS PRÜFEN';chip='warn';}
+ $('live-label').textContent=label;$('live-chip').dataset.state=chip;
+ $('speed').textContent=fresh&&f.speed!==null?String(Math.round(f.speed*3.6)):'··';
+ $('accuracy').textContent=f?(fresh?'± '+Math.round(f.accuracy)+' m':'Letzter Fix vor '+age+' s'):'Noch kein Standort';
+ const bars=fresh?(f.accuracy<=10?4:f.accuracy<=25?3:f.accuracy<=60?2:1):0;document.querySelectorAll('.signal-bars i').forEach((el,i)=>el.classList.toggle('on',i<bars));
+ const h=state.heading;$('course').textContent=h===null?'Richtung offen':Math.round(h).toString().padStart(3,'0')+'° · '+['N','NO','O','SO','S','SW','W','NW'][Math.round(h/45)%8];
+ $('mode').textContent=!fresh?(state.tracking?'STANDORTSUCHE':'GPS PAUSIERT'):state.returning?'ZURÜCK ZU DIR':state.following?'SPIELER VERFOLGEN':'FREIE KARTE';
+ $('location-text').textContent=!f?'Dein Radar wartet.':!fresh?'Letzte Position':state.returning?'Kamera wird angebunden.':state.following?'Du bist im Mittelpunkt.':'Du schaust dich um.';
+ $('gps-label').textContent=state.tracking?'PAUSE':'GPS';$('gps-icon').setAttribute('href',state.tracking?'#i-pause':'#i-gps');$('gps').setAttribute('aria-label',state.tracking?'GPS pausieren':'GPS starten');
+ const secs=Math.max(0,Math.ceil((IDLE_MS-(performance.now()-state.lastInput))/1000));
+ $('follow-title').textContent=!state.tracking?'GPS verbinden':!f?'Standort wird gesucht':state.returning?'Zurück zum Spieler':state.following?'Angebunden':'Zum Spieler';
+ $('follow-detail').textContent=!state.tracking?'Standort erlauben':!fresh?'Warte auf frisches GPS':state.returning?'Sanfte Kamerafahrt':state.following?'Frei verschiebbar':$('settings').open?'Rückkehr nach dem Menü':'Automatisch in '+secs+' s';
+ $('return-ring').style.setProperty('--progress',!state.following&&fresh?Math.min(100,100-secs*10)+'%':'0%');
+ $('hint').textContent=prefs.hideHud?'10 s ohne Eingabe: zurück zu dir, HUD aus.':'10 s ohne Eingabe: zurück zum Spieler.';
+ if(state.marker)state.marker.getElement().classList.toggle('stale',!fresh);
+ const note=!navigator.onLine?'Offline. GPS kann weiterlaufen, neue Straßen brauchen Internet.':state.lastError?state.lastError:state.mapError?'Kartendaten konnten nicht geladen werden. Internetverbindung prüfen.':state.tracking&&f&&!fresh?'Kein frischer GPS-Fix. Der Pfeil zeigt die letzte Messung.':fresh&&f.accuracy>80?'Ungenaues GPS (± '+Math.round(f.accuracy)+' m). Im Freien ist der Empfang oft besser.':'';
+ $('notice').hidden=!note;if($('notice').textContent!==note)$('notice').textContent=note;
+ if(!fresh&&state.quiet){state.quiet=false;document.body.classList.remove('quiet');document.querySelectorAll('.hud').forEach(el=>el.inert=false);}
+}
+function tick(){
+ render();
+ if(document.hidden||state.pointers.size||$('settings').open||!$('welcome').hidden)return;
+ if(performance.now()-state.lastInput>=IDLE_MS&&isFresh()){
+  if(!state.following&&!state.returning)returnToPlayer(true);
+  hideHud();
+ }
+}
+async function acquireWake(){
+ if(!state.wakeWanted||document.hidden||state.wake)return;
+ try{state.wake=await navigator.wakeLock.request('screen');const lock=state.wake;lock.addEventListener('release',()=>{if(state.wake===lock)state.wake=null;});$('wake-detail').textContent='Display bleibt an, solange die App sichtbar ist';}
+ catch{state.wakeWanted=false;$('wake-toggle').checked=false;$('wake-detail').textContent='Vom Browser abgelehnt oder Energiesparmodus aktiv';}
+}
+function setup(){
+ applyTheme(prefs.theme);$('labels-toggle').checked=prefs.labels;$('accuracy-toggle').checked=prefs.accuracy;$('hud-toggle').checked=prefs.hideHud;
+ $('reload').onclick=()=>window.location.reload();
+ if(!window.maplibregl){$('welcome-title').textContent='Karte nicht geladen.';$('welcome-copy').textContent='Die Kartenbibliothek ist nicht erreichbar. Prüfe deine Internetverbindung und lade neu.';$('welcome-start').textContent='Neu laden';$('welcome-start').onclick=()=>location.reload();return;}
+ try{state.map=new maplibregl.Map({container:'map',style:makeStyle(prefs.theme),center:[16.3738,48.2082],zoom:13,minZoom:2,maxZoom:20,pitch:prefs.tilt?45:0,maxPitch:55,attributionControl:false,dragRotate:true,touchPitch:true,fadeDuration:150});}
+ catch{$('welcome-title').textContent='Karte nicht verfügbar.';$('welcome-copy').textContent='WebGL ist nicht verfügbar. Bitte Safari aktualisieren oder die App neu öffnen.';$('welcome-start').textContent='Neu laden';$('welcome-start').onclick=()=>location.reload();return;}
+ const map=state.map;
+ const dock=document.querySelector('.bottom');
+ const sizeDock=()=>document.documentElement.style.setProperty('--dock-height',dock.getBoundingClientRect().height+'px');
+ if('ResizeObserver'in window)new ResizeObserver(sizeDock).observe(dock);else window.addEventListener('resize',sizeDock);
+ sizeDock();
+ map.on('style.load',()=>{state.ready=true;applyTheme(prefs.theme);updateCircle();});
+ map.on('sourcedata',e=>{if(e.sourceId==='world'&&e.sourceDataType==='content'){state.tilesSeen=true;state.mapError=false;render();}});
+ map.on('error',e=>{if(e.sourceId==='world'||!state.tilesSeen){state.mapError=true;render();}console.warn('Kartenfehler:',e.error?.message||'Unbekannter Fehler');});
+ map.on('rotate',()=>{$('compass-needle').style.transform='rotate('+(-map.getBearing())+'deg)';});
+ // Only genuine user gestures detach the camera. Programmatic flyTo/easeTo events do not.
+ for(const type of ['dragstart','zoomstart','rotatestart','pitchstart'])map.on(type,e=>{if(e.originalEvent)detach();});
+ for(const type of ['drag','zoom','rotate','pitch','moveend'])map.on(type,e=>{if(e.originalEvent)reveal();});
+ map.on('click',()=>reveal());
+ document.addEventListener('pointerdown',e=>{if(e.target.closest('#map')){state.pointers.add(e.pointerId);if(state.returning){detach();map.stop();}}reveal();},{passive:true});
+ document.addEventListener('pointermove',e=>{if(state.pointers.has(e.pointerId))reveal();},{passive:true});
+ for(const type of ['pointerup','pointercancel'])document.addEventListener(type,e=>{if(state.pointers.delete(e.pointerId))reveal();},{passive:true});
+ window.addEventListener('blur',()=>state.pointers.clear());
+ document.addEventListener('wheel',()=>reveal(),{passive:true});document.addEventListener('keydown',()=>reveal());
+ document.addEventListener('focusin',e=>{if(e.target.closest('.hud'))reveal();});
+ // Pointer users should not keep the HUD visible through a lingering button focus.
+ document.addEventListener('click',e=>{if(e.detail>0&&e.target.closest('button'))e.target.closest('button').blur();});
+ $('gps').onclick=()=>state.tracking?stopGPS():startGPS();
+ $('welcome-start').onclick=startGPS;$('welcome-dismiss').onclick=()=>{$('welcome').hidden=true;reveal();};
+ $('follow').onclick=()=>{if(!state.tracking)startGPS();else if(!state.fix)refreshGPS();else returnToPlayer(false);};
+ function syncViewButtons(){$('north').setAttribute('aria-pressed',String(prefs.north));$('north').setAttribute('aria-label',prefs.north?'Fahrtrichtung oben einschalten':'Norden oben einschalten');$('pitch').setAttribute('aria-pressed',String(prefs.tilt));$('pitch').textContent=prefs.tilt?'SCHRÄG':'2D';}
+ $('north').onclick=()=>{reveal();prefs.north=!prefs.north;persist();syncViewButtons();cancelReturn();map.easeTo({bearing:cameraBearing(),duration:reduced.matches?0:500});};
+ $('pitch').onclick=()=>{reveal();prefs.tilt=!prefs.tilt;persist();syncViewButtons();cancelReturn();map.easeTo({pitch:prefs.tilt?45:0,duration:reduced.matches?0:600});};
+ for(const [id,step]of [['zoom-in',1],['zoom-out',-1]])$(id).onclick=()=>{reveal();cancelReturn();const zoom=Math.min(20,Math.max(2,map.getZoom()+step));if(state.following)state.followZoom=zoom;map.easeTo({zoom,duration:reduced.matches?0:300});};
+ syncViewButtons();
+ $('themes-open').onclick=()=>{reveal();$('settings').showModal();};$('themes-close').onclick=()=>$('settings').close();$('settings').addEventListener('close',()=>{reveal();$('themes-open').focus({preventScroll:true});$('themes-open').blur();});
+ $('settings').addEventListener('click',e=>{if(e.target===$('settings')){const rect=$('settings').getBoundingClientRect();if(e.clientX<rect.left||e.clientX>rect.right||e.clientY<rect.top||e.clientY>rect.bottom)$('settings').close();}});
+ document.querySelectorAll('[data-select-theme]').forEach(el=>el.onclick=()=>{reveal();applyTheme(el.dataset.selectTheme);});
+ $('labels-toggle').onchange=e=>{prefs.labels=e.target.checked;applyTheme(prefs.theme);};$('accuracy-toggle').onchange=e=>{prefs.accuracy=e.target.checked;persist();updateCircle();};$('hud-toggle').onchange=e=>{prefs.hideHud=e.target.checked;persist();reveal();};
+ if(!('wakeLock'in navigator)){$('wake-toggle').disabled=true;$('wake-detail').textContent='Von diesem Browser nicht unterstützt';}
+ $('wake-toggle').onchange=async e=>{state.wakeWanted=e.target.checked;if(state.wakeWanted)await acquireWake();else {if(state.wake)await state.wake.release();state.wake=null;$('wake-detail').textContent='Nur solange diese App sichtbar ist';}};
+ document.addEventListener('visibilitychange',()=>{
+  state.pointers.clear();
+  if(document.hidden){if(state.following)state.needsRecenter=true;cancelReturn();map.stop();return;}
+  reveal();map.resize();render();if(state.tracking)refreshGPS();if(state.wakeWanted)acquireWake();
+ });
+ window.addEventListener('pageshow',e=>{if(e.persisted){reveal();map.resize();refreshGPS();}});
+ window.addEventListener('online',()=>{state.mapError=false;render();refreshGPS();});window.addEventListener('offline',render);
+ setInterval(tick,250);setInterval(refreshGPS,15000);render();
+ // No coordinates or journeys are stored. Only the permission preference is remembered.
+ if(prefs.autoStart)startGPS();else if(navigator.permissions?.query)navigator.permissions.query({name:'geolocation'}).then(p=>{if(p.state==='granted'&&!state.tracking)startGPS();}).catch(()=>{});
+ if('serviceWorker'in navigator&&window.isSecureContext)navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(reg=>reg.update()).catch(()=>{});
+ // Read-only diagnostics for reproducible tests, without affecting production GPS.
+ if(new URLSearchParams(location.search).has('debug'))window.RLDebug=Object.freeze({version:VERSION,map,marker:()=>state.marker,state:()=>({following:state.following,returning:state.returning,quiet:state.quiet,tracking:state.tracking,theme:prefs.theme,fix:state.fix?{...state.fix}:null,heading:state.heading}),makeStyle});
+}
+setup();
+})();
+</script>
+</body>
+</html>
