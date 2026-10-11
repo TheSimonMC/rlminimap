@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#10171a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RL MiniMap">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.js"></script>
+<title>Real Life MiniMap</title>
+<style>
+*{box-sizing:border-box}html,body,#map{width:100%;height:100%;margin:0}body{background:#10171a;color:#e9f1ef;font-family:system-ui,-apple-system,sans-serif;overflow:hidden}#map{position:absolute;inset:0}.maplibregl-control-container{display:none}
+#shade{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 45%,rgba(0,0,0,.42) 100%);z-index:2}
+#player{position:absolute;left:50%;top:50%;width:52px;height:52px;transform:translate(-50%,-50%);z-index:4;pointer-events:none;filter:drop-shadow(0 2px 7px #00edc1aa)}
+#player svg{width:100%;height:100%}
+#hud{position:absolute;z-index:5;top:calc(env(safe-area-inset-top) + 18px);left:18px;right:18px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
+.brand{font-weight:900;letter-spacing:2px;font-size:14px;text-shadow:0 2px 6px #000}.brand small{display:block;font-size:9px;letter-spacing:3px;color:#66f8d8}
+#speed{padding:10px 14px;background:#0c1618c7;border:1px solid #4affc94d;border-radius:12px;font-size:26px;font-weight:800;text-align:right;line-height:1}#speed small{display:block;font-size:9px;font-weight:600;color:#aad1cb;letter-spacing:2px;margin-top:5px}
+#bottom{position:absolute;z-index:5;bottom:calc(env(safe-area-inset-bottom) + 22px);left:18px;right:18px;display:flex;align-items:end;justify-content:space-between;gap:10px}
+#status{max-width:67%;padding:10px 13px;background:#0c1618dc;border:1px solid #ffffff22;border-radius:12px;font-size:12px;line-height:1.4}
+button{border:1px solid #5cf6d3a0;background:#102725ed;color:#eafff9;border-radius:12px;padding:12px 15px;font-weight:750;font-size:13px;cursor:pointer}
+#controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+</style>
+</head>
+<body>
+<div id="map"></div><div id="shade"></div>
+<div id="player"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M32 5 51 53 32 43 13 53Z" fill="#0a1718" stroke="#00f7c4" stroke-width="4" stroke-linejoin="round"/><path d="M32 16 42 43 32 37 22 43Z" fill="#dffff8"/></svg></div>
+<div id="hud"><div class="brand">REAL LIFE <small>MINIMAP / V1</small></div><div id="speed">0<small>KM/H</small></div></div>
+<div id="bottom"><div id="status" role="status">Karte wird geladen. GPS starten, um deine Position zu sehen.</div><div id="controls"><button id="rotate">NORD</button><button id="locate">GPS START</button></div></div>
+<script>
+const statusEl=document.getElementById('status'),speedEl=document.getElementById('speed'),locateBtn=document.getElementById('locate'),rotateBtn=document.getElementById('rotate');
+let tracking=false,watchId=null,last=null,heading=0,followHeading=true;
+const style={version:8,sources:{osm:{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,attribution:'© OpenStreetMap contributors'}},layers:[{id:'osm',type:'raster',source:'osm',paint:{'raster-saturation':-0.9,'raster-brightness-max':0.52,'raster-contrast':0.17}}]};
+const map=new maplibregl.Map({container:'map',style,center:[16.3738,48.2082],zoom:15,pitch:0,attributionControl:true});
+map.addControl(new maplibregl.AttributionControl({compact:true}));
+function setStatus(s){statusEl.textContent=s}
+function angleFrom(a,b){const x=(b.longitude-a.longitude)*Math.cos(b.latitude*Math.PI/180);const y=b.latitude-a.latitude;return (Math.atan2(x,y)*180/Math.PI+360)%360}
+function onPosition(p){const c=p.coords;const point={latitude:c.latitude,longitude:c.longitude};let direction=Number.isFinite(c.heading)?c.heading:null;
+if(direction===null&&last){const meters=distance(last,point);if(meters>7)direction=angleFrom(last,point)}
+if(direction!==null&&((c.speed??0)>0.8|| (last&&distance(last,point)>7)))heading=direction;
+const speed=Number.isFinite(c.speed)?Math.max(0,c.speed*3.6):0;speedEl.firstChild.textContent=String(Math.round(speed));
+map.easeTo({center:[point.longitude,point.latitude],bearing:followHeading?-heading:0,zoom:Math.max(map.getZoom(),16),duration:600,essential:true});
+last=point;setStatus('GPS aktiv • Genauigkeit ca. '+Math.round(c.accuracy)+' m');}
+function distance(a,b){const R=6371000,r=Math.PI/180,dp=(b.latitude-a.latitude)*r,dl=(b.longitude-a.longitude)*r;const v=Math.sin(dp/2)**2+Math.cos(a.latitude*r)*Math.cos(b.latitude*r)*Math.sin(dl/2)**2;return 2*R*Math.asin(Math.sqrt(v))}
+function stop(){if(watchId!==null)navigator.geolocation.clearWatch(watchId);watchId=null;tracking=false;locateBtn.textContent='GPS START';setStatus('GPS pausiert')}
+locateBtn.addEventListener('click',()=>{if(tracking){stop();return}if(!('geolocation'in navigator)){setStatus('Dein Browser unterstützt kein GPS.');return}if(!window.isSecureContext){setStatus('GPS benötigt HTTPS. Öffne die GitHub-Pages-Adresse.');return}
+tracking=true;locateBtn.textContent='GPS STOP';setStatus('Standort wird gesucht …');
+watchId=navigator.geolocation.watchPosition(onPosition,e=>{const msg=e.code===1?'Standort verweigert. Bitte Safari-Standortfreigabe aktivieren.':e.code===2?'Standort derzeit nicht verfügbar.':'GPS-Zeitüberschreitung. Bitte erneut versuchen.';setStatus(msg);if(e.code===1)stop();},{enableHighAccuracy:true,maximumAge:1000,timeout:15000})});
+rotateBtn.addEventListener('click',()=>{followHeading=!followHeading;rotateBtn.textContent=followHeading?'NORD':'FAHRT';map.easeTo({bearing:followHeading?-heading:0,duration:400})});
+map.on('error',()=>setStatus('Kartenfehler. Prüfe deine Internetverbindung.'));
+if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script>
+</body>
+</html>
