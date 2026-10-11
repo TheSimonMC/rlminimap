@@ -1,58 +1,72 @@
 <!doctype html>
-<html lang="de">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<meta name="theme-color" content="#10171a">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="RL MiniMap">
-<link rel="manifest" href="./manifest.webmanifest">
-<link rel="icon" href="./icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.css">
-<script src="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.js"></script>
+<html lang="de"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0c1418"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="RL MiniMap">
+<link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link href="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.css" rel="stylesheet"><script src="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.js"></script>
 <title>Real Life MiniMap</title>
 <style>
-*{box-sizing:border-box}html,body,#map{width:100%;height:100%;margin:0}body{background:#10171a;color:#e9f1ef;font-family:system-ui,-apple-system,sans-serif;overflow:hidden}#map{position:absolute;inset:0}.maplibregl-control-container{display:none}
-#shade{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 45%,rgba(0,0,0,.42) 100%);z-index:2}
-#player{position:absolute;left:50%;top:50%;width:52px;height:52px;transform:translate(-50%,-50%);z-index:4;pointer-events:none;filter:drop-shadow(0 2px 7px #00edc1aa)}
-#player svg{width:100%;height:100%}
-#hud{position:absolute;z-index:5;top:calc(env(safe-area-inset-top) + 18px);left:18px;right:18px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
-.brand{font-weight:900;letter-spacing:2px;font-size:14px;text-shadow:0 2px 6px #000}.brand small{display:block;font-size:9px;letter-spacing:3px;color:#66f8d8}
-#speed{padding:10px 14px;background:#0c1618c7;border:1px solid #4affc94d;border-radius:12px;font-size:26px;font-weight:800;text-align:right;line-height:1}#speed small{display:block;font-size:9px;font-weight:600;color:#aad1cb;letter-spacing:2px;margin-top:5px}
-#bottom{position:absolute;z-index:5;bottom:calc(env(safe-area-inset-bottom) + 22px);left:18px;right:18px;display:flex;align-items:end;justify-content:space-between;gap:10px}
-#status{max-width:67%;padding:10px 13px;background:#0c1618dc;border:1px solid #ffffff22;border-radius:12px;font-size:12px;line-height:1.4}
-button{border:1px solid #5cf6d3a0;background:#102725ed;color:#eafff9;border-radius:12px;padding:12px 15px;font-weight:750;font-size:13px;cursor:pointer}
-#controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-</style>
-</head>
-<body>
-<div id="map"></div><div id="shade"></div>
-<div id="player"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M32 5 51 53 32 43 13 53Z" fill="#0a1718" stroke="#00f7c4" stroke-width="4" stroke-linejoin="round"/><path d="M32 16 42 43 32 37 22 43Z" fill="#dffff8"/></svg></div>
-<div id="hud"><div class="brand">REAL LIFE <small>MINIMAP / V1</small></div><div id="speed">0<small>KM/H</small></div></div>
-<div id="bottom"><div id="status" role="status">Karte wird geladen. GPS starten, um deine Position zu sehen.</div><div id="controls"><button id="rotate">NORD</button><button id="locate">GPS START</button></div></div>
+*{box-sizing:border-box}html,body,#map{width:100%;height:100%;margin:0}body{overflow:hidden;background:#0c1418;color:#e9fff9;font-family:system-ui,-apple-system,sans-serif}#map{position:absolute;inset:0}.maplibregl-control-container{font-size:9px;opacity:.6}
+#vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 45%,#0008 100%);z-index:2}
+#player{position:absolute;left:50%;top:50%;width:56px;height:56px;transform:translate(-50%,-50%);z-index:5;filter:drop-shadow(0 1px 7px #00efbf);pointer-events:none;display:none}
+#player svg{width:100%;height:100%}#player.active{display:block}
+#top{position:absolute;top:calc(env(safe-area-inset-top) + 14px);left:16px;right:16px;z-index:6;display:flex;justify-content:space-between;pointer-events:none;gap:12px}
+.brand{font-size:14px;font-weight:900;letter-spacing:1.8px;text-shadow:0 2px 5px #000}.brand small{display:block;color:#5df7c7;font-size:9px;letter-spacing:2.6px;margin-top:3px}
+#speed{background:#081719dd;border:1px solid #55f3c45e;border-radius:12px;padding:10px 15px;text-align:right;font-size:28px;line-height:1;font-weight:900;min-width:84px}#speed small{display:block;font-size:9px;letter-spacing:1.7px;margin-top:5px;color:#a9d5cb}
+#bottom{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 16px);left:14px;right:14px;z-index:6;display:flex;align-items:end;justify-content:space-between;gap:10px}
+#status{background:#071719e8;border:1px solid #ffffff25;border-radius:12px;padding:10px 12px;font-size:12px;max-width:58%;line-height:1.4;min-width:120px}
+#buttons{display:flex;gap:7px;justify-content:flex-end;flex-wrap:wrap}
+button{background:#112a2be8;border:1px solid #4af5c79c;color:#effffb;border-radius:11px;padding:11px 12px;font-size:12px;font-weight:800;cursor:pointer}
+button:active{background:#215449}
+#accuracy{display:block;color:#a1bdb7;font-size:10px;margin-top:3px}
+</style></head><body>
+<div id="map"></div><div id="vignette"></div>
+<div id="player" aria-label="Deine aktuelle GPS-Position"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fill="#081b1b55" stroke="#a7ffeb44" stroke-width="1.5"/><path d="M32 5 50 52 32 42 14 52Z" fill="#082423" stroke="#00ffc5" stroke-width="3.5" stroke-linejoin="round"/><path d="M32 17 42 43 32 37 22 43Z" fill="#effffb"/></svg></div>
+<div id="top"><div class="brand">REAL LIFE <small>MINIMAP / LIVE</small></div><div id="speed">0<small>KM/H</small></div></div>
+<div id="bottom"><div id="status" role="status">Warte auf GPS-Freigabe…<span id="accuracy">GPS noch nicht aktiv</span></div><div id="buttons"><button id="north" type="button">NORD: AUS</button><button id="follow" type="button">FOLGEN: AN</button><button id="gps" type="button">GPS START</button></div></div>
 <script>
-const statusEl=document.getElementById('status'),speedEl=document.getElementById('speed'),locateBtn=document.getElementById('locate'),rotateBtn=document.getElementById('rotate');
-let tracking=false,watchId=null,last=null,heading=0,followHeading=true;
-const style={version:8,sources:{osm:{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,attribution:'© OpenStreetMap contributors'}},layers:[{id:'osm',type:'raster',source:'osm',paint:{'raster-saturation':-0.9,'raster-brightness-max':0.52,'raster-contrast':0.17}}]};
-const map=new maplibregl.Map({container:'map',style,center:[16.3738,48.2082],zoom:15,pitch:0,attributionControl:true});
+'use strict';
+const $=id=>document.getElementById(id);
+const style={version:8,sources:{osm:{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,attribution:'© OpenStreetMap contributors'}},layers:[{id:'osm',type:'raster',source:'osm',paint:{'raster-saturation':-0.95,'raster-brightness-max':0.58,'raster-contrast':0.2}}]};
+const map=new maplibregl.Map({container:'map',style,center:[16.3738,48.2082],zoom:16,attributionControl:false});
 map.addControl(new maplibregl.AttributionControl({compact:true}));
-function setStatus(s){statusEl.textContent=s}
-function angleFrom(a,b){const x=(b.longitude-a.longitude)*Math.cos(b.latitude*Math.PI/180);const y=b.latitude-a.latitude;return (Math.atan2(x,y)*180/Math.PI+360)%360}
-function onPosition(p){const c=p.coords;const point={latitude:c.latitude,longitude:c.longitude};let direction=Number.isFinite(c.heading)?c.heading:null;
-if(direction===null&&last){const meters=distance(last,point);if(meters>7)direction=angleFrom(last,point)}
-if(direction!==null&&((c.speed??0)>0.8|| (last&&distance(last,point)>7)))heading=direction;
-const speed=Number.isFinite(c.speed)?Math.max(0,c.speed*3.6):0;speedEl.firstChild.textContent=String(Math.round(speed));
-map.easeTo({center:[point.longitude,point.latitude],bearing:followHeading?-heading:0,zoom:Math.max(map.getZoom(),16),duration:600,essential:true});
-last=point;setStatus('GPS aktiv • Genauigkeit ca. '+Math.round(c.accuracy)+' m');}
-function distance(a,b){const R=6371000,r=Math.PI/180,dp=(b.latitude-a.latitude)*r,dl=(b.longitude-a.longitude)*r;const v=Math.sin(dp/2)**2+Math.cos(a.latitude*r)*Math.cos(b.latitude*r)*Math.sin(dl/2)**2;return 2*R*Math.asin(Math.sqrt(v))}
-function stop(){if(watchId!==null)navigator.geolocation.clearWatch(watchId);watchId=null;tracking=false;locateBtn.textContent='GPS START';setStatus('GPS pausiert')}
-locateBtn.addEventListener('click',()=>{if(tracking){stop();return}if(!('geolocation'in navigator)){setStatus('Dein Browser unterstützt kein GPS.');return}if(!window.isSecureContext){setStatus('GPS benötigt HTTPS. Öffne die GitHub-Pages-Adresse.');return}
-tracking=true;locateBtn.textContent='GPS STOP';setStatus('Standort wird gesucht …');
-watchId=navigator.geolocation.watchPosition(onPosition,e=>{const msg=e.code===1?'Standort verweigert. Bitte Safari-Standortfreigabe aktivieren.':e.code===2?'Standort derzeit nicht verfügbar.':'GPS-Zeitüberschreitung. Bitte erneut versuchen.';setStatus(msg);if(e.code===1)stop();},{enableHighAccuracy:true,maximumAge:1000,timeout:15000})});
-rotateBtn.addEventListener('click',()=>{followHeading=!followHeading;rotateBtn.textContent=followHeading?'NORD':'FAHRT';map.easeTo({bearing:followHeading?-heading:0,duration:400})});
-map.on('error',()=>setStatus('Kartenfehler. Prüfe deine Internetverbindung.'));
+let watch=null,tracking=false,follow=true,northUp=false,previous=null,heading=0,hasFix=false,lastFixAt=0;
+const rad=Math.PI/180;
+function meters(a,b){const dlat=(b.lat-a.lat)*rad,dlon=(b.lon-a.lon)*rad;const h=Math.sin(dlat/2)**2+Math.cos(a.lat*rad)*Math.cos(b.lat*rad)*Math.sin(dlon/2)**2;return 12742000*Math.asin(Math.min(1,Math.sqrt(h)));}
+function bearing(a,b){const dlon=(b.lon-a.lon)*rad;const y=Math.sin(dlon)*Math.cos(b.lat*rad);const x=Math.cos(a.lat*rad)*Math.sin(b.lat*rad)-Math.sin(a.lat*rad)*Math.cos(b.lat*rad)*Math.cos(dlon);return (Math.atan2(y,x)/rad+360)%360;}
+function label(msg,detail=''){ $('status').firstChild.textContent=msg;$('accuracy').textContent=detail; }
+function update(p){
+ const c=p.coords,point={lat:c.latitude,lon:c.longitude},timestamp=p.timestamp||Date.now();
+ if(!Number.isFinite(point.lat)||!Number.isFinite(point.lon))return;
+ let speed=Number.isFinite(c.speed)&&c.speed>=0?c.speed:null;
+ const traveled=previous?meters(previous.point,point):0;
+ const dt=previous?(timestamp-previous.timestamp)/1000:0;
+ if(speed===null&&dt>0&&dt<30&&traveled>3)speed=traveled/dt;
+ if(speed!==null&&speed>1.3&&Number.isFinite(c.heading))heading=c.heading;
+ else if(previous&&traveled>Math.max(6,Math.min(15,c.accuracy||10))&&dt>0&&dt<30)heading=bearing(previous.point,point);
+ $('speed').firstChild.textContent=String(Math.round(Math.max(0,(speed||0)*3.6)));
+ $('player').classList.add('active');hasFix=true;lastFixAt=Date.now();
+ label('GPS LIVE', 'Genauigkeit: ±'+Math.round(c.accuracy||0)+' m'+(speed===null?' • Tempo unbekannt':''));
+ if(follow){map.stop();map.jumpTo({center:[point.lon,point.lat],bearing:northUp?0:-heading,zoom:Math.max(map.getZoom(),16)});}
+ previous={point,timestamp};
+}
+function error(e){const message=e.code===1?'Standort verweigert. Safari-Einstellungen prüfen.':e.code===2?'GPS-Signal nicht verfügbar.':'GPS-Suche dauert zu lange.';label(message,'GPS benötigt Standortfreigabe und HTTPS');if(e.code===1)stop(false);}
+function start(){
+ if(tracking)return;
+ if(!window.isSecureContext){label('HTTPS erforderlich','Öffne die GitHub-Pages-Adresse.');return;}
+ if(!navigator.geolocation){label('GPS wird nicht unterstützt');return;}
+ tracking=true;$('gps').textContent='GPS STOP';label('GPS wird gesucht…','Standortzugriff bitte erlauben');
+ watch=navigator.geolocation.watchPosition(update,error,{enableHighAccuracy:true,maximumAge:0,timeout:20000});
+}
+function stop(show=true){if(watch!==null)navigator.geolocation.clearWatch(watch);watch=null;tracking=false;$('gps').textContent='GPS START';if(show)label('GPS pausiert','Zum Fortsetzen GPS START drücken');}
+$('gps').onclick=()=>tracking?stop():start();
+$('follow').onclick=()=>{follow=!follow;$('follow').textContent=follow?'FOLGEN: AN':'FOLGEN: AUS';if(follow&&previous){map.jumpTo({center:[previous.point.lon,previous.point.lat],bearing:northUp?0:-heading});}};
+$('north').onclick=()=>{northUp=!northUp;$('north').textContent=northUp?'NORD: AN':'NORD: AUS';map.easeTo({bearing:northUp?0:-heading,duration:250});};
+map.on('dragstart',()=>{follow=false;$('follow').textContent='FOLGEN: AUS';});
+map.on('error',e=>{if(!hasFix)label('Karte konnte nicht geladen werden','Internetverbindung prüfen');});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&tracking&&previous){label('GPS LIVE','Aktualisierung läuft…');}});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
-</script>
-</body>
-</html>
+// On iPhone, this requests location when the app is opened. If permission was granted earlier,
+// tracking resumes automatically while the app is in the foreground.
+map.once('load',()=>start());
+</script></body></html>
